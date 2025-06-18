@@ -104,6 +104,14 @@ const option = ref<ECBasicOption>({
   tooltip: {
     trigger: 'axis',
     position: function (pt: any) {
+      // pt is an array with [x, y] coordinates
+      const chartWidth = document.querySelector('.chart')?.clientWidth || 800;
+      const x = pt[0];
+      // If the x coordinate is more than 80% of the chart width, position tooltip to the left
+      if (x > chartWidth - 200) {
+        return [chartWidth - 200, '10%'];
+      }
+
       return [pt[0], '10%'];
     }
   },
