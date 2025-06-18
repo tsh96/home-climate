@@ -16,7 +16,7 @@ import VChart, { THEME_KEY } from "vue-echarts";
 import { ref, provide, onMounted, watch } from "vue";
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, query, where, onSnapshot } from "firebase/firestore";
-import { getAnalytics } from "firebase/analytics";
+// import { getAnalytics } from "firebase/analytics";
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { whenever } from "@vueuse/core";
 import type { ECBasicOption } from "echarts/types/dist/shared";
@@ -39,7 +39,7 @@ type Telemetry = {
 
 const app = initializeApp(firebaseConfig);
 
-const analytics = getAnalytics(app);
+// const analytics = getAnalytics(app);
 
 const provider = new GoogleAuthProvider();
 const auth = getAuth();
@@ -182,7 +182,7 @@ watch(telemetries, (newTelemetries) => {
 </script>
 
 <template>
-  <v-chart class="chart" :option="option" autoresize/>
+  <v-chart class="chart" :option="option" autoresize />
 </template>
 
 <style scoped>
