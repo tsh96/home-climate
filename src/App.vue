@@ -13,13 +13,13 @@ import {
   ToolboxComponent,
 } from "echarts/components";
 import VChart, { THEME_KEY } from "vue-echarts";
-import { ref, provide, onMounted, watch } from "vue";
+import { ref, provide, onMounted, watch, computed, watchEffect } from "vue";
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, query, where, onSnapshot } from "firebase/firestore";
 // import { getAnalytics } from "firebase/analytics";
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import { whenever } from "@vueuse/core";
 import type { ECBasicOption } from "echarts/types/dist/shared";
+import { NDatePicker } from "naive-ui";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAUfg-GWp2g5dHfpY4Bx4x1piTwWb2TNUk",
@@ -70,22 +70,32 @@ onMounted(async () => {
     });
 })
 
+const timeRange = ref<[number, number]>([Date.now() - 8 * 60 * 60 * 1000, Date.now()]);
+
 const db = getFirestore(app);
 const telemetryCollection = collection(db, "telemetry");
-const telemetryQuery = query(telemetryCollection, where("createdAt", ">=", Date.now() - 8 * 60 * 60 * 1000));
+const telemetryQuery = computed(() => {
+  return query(telemetryCollection,
+    where("createdAt", ">=", timeRange.value[0]),
+    where("createdAt", "<=", timeRange.value[1]),
+  );
+})
 
-
+let unsubscribe: (() => void) | null = null;
 
 const telemetries = ref<Telemetry[]>([]);
-whenever(currentUser, () => {
-  onSnapshot(telemetryQuery, (querySnapshot) => {
+watchEffect(() => {
+  if (!currentUser.value) return;
+
+  if (unsubscribe) {
+    unsubscribe();
+  }
+
+  unsubscribe = onSnapshot(telemetryQuery.value, (querySnapshot) => {
     telemetries.value = querySnapshot.docs.map(doc => doc.data() as Telemetry)
     console.log("Telemetry data updated:", telemetries.value);
   })
-}, { once: true, immediate: true })
-
-
-// 
+})
 
 use([
   CanvasRenderer,
@@ -117,7 +127,7 @@ const option = ref<ECBasicOption>({
   },
   title: {
     left: 'center',
-    text: 'Temperature'
+    text: 'Temperature and Humidity',
   },
   toolbox: {
     feature: {
@@ -191,6 +201,9 @@ watch(telemetries, (newTelemetries) => {
 
 <template>
   <v-chart class="chart" :option="option" autoresize />
+  <div class="absolute w-full top-0">
+    <NDatePicker class="mx-auto w-96" v-model:value="timeRange" type="datetimerange"></NDatePicker>
+  </div>
 </template>
 
 <style scoped>
